@@ -1,0 +1,47 @@
+.keyword-analysis-page {
+    padding: 20px 0;
+  }
+  
+  .page-title {
+    margin-bottom: 30px;
+    color: #333;
+  }
+  
+  .search-container {
+    margin-bottom: 20px;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+  }
+  
+  .search-input:focus {
+    border-color: #4a90e2;
+    outline: none;
+  }
+  
+  .loading, .error, .no-results {
+    padding: 20px;
+    text-align: center;
+    background-color: white;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+  
+  .loading {
+    color: #666;
+  }
+  
+  .error {
+    color: #e74c3c;
+  }
+  
+  .no-results {
+    color: #666;
+  }
+  
