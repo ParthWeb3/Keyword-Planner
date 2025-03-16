@@ -19,6 +19,12 @@
     font-weight: bold;
   }
   
+  .navbar-logo-image {
+    height: 40px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  
   .nav-menu {
     display: flex;
     list-style: none;
@@ -37,4 +43,3 @@
   .nav-link:hover {
     opacity: 0.8;
   }
-  

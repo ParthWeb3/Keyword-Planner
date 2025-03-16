@@ -51,7 +51,8 @@ const KeywordAnalysisPage = () => {
 
   // Filter keywords based on search term and platform
   const filteredKeywords = keywords.filter(keyword => 
-    keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
+    keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (activePlatform === 'all' || keyword.platform === activePlatform)
   );
 
   const handleSearch = (e) => {
