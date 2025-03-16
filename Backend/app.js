@@ -12,7 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 
 // Load environment variables
-dotenv.config(); // Ensure this is called before accessing process.env
+dotenv.config({ path: './.env' }); // Ensure the .env file is in the root of the Backend directory
 
 // Middleware
 app.use(express.json());
@@ -48,11 +48,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Remove app.listen() from here
 
 module.exports = app;
 

@@ -1,8 +1,6 @@
 // src/services/keywordService.js
 import axiosInstance from './axiosInstance';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 export const getKeywords = async () => {
   try {
     const response = await axiosInstance.get('/keywords');
@@ -39,6 +37,16 @@ export const createKeyword = async (keywordData) => {
     return response.data;
   } catch (error) {
     console.error('Error creating keyword:', error);
+    throw error;
+  }
+};
+
+export const getKeywordTrends = async (keywordId) => {
+  try {
+    const response = await axiosInstance.get(`/keywords/trends/${keywordId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching trends:', error);
     throw error;
   }
 };

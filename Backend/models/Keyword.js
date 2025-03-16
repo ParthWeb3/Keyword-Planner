@@ -2,35 +2,17 @@
 const mongoose = require('mongoose');
 
 const keywordSchema = new mongoose.Schema({
-  term: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  searchVolume: {
-    type: Number,
-    default: 0
-  },
-  competition: {
-    type: String,
-    enum: ['Low', 'Medium', 'High'],
-    default: 'Medium'
-  },
-  cpc: {
-    type: Number,
-    default: 0.0
-  },
-  relatedTerms: [{
-    type: String,
-    trim: true
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  keyword: { type: String, required: true },
+  searchVolume: { type: Number, required: true },
+  competition: { type: String, required: true },
+  platform: { type: String },
+  searchVolumeTrends: [
+    {
+      month: { type: String },
+      year: { type: Number },
+      volume: { type: Number },
+    },
+  ],
 });
-
-// Create index for faster searches
-keywordSchema.index({ term: 1 });
 
 module.exports = mongoose.model('Keyword', keywordSchema);

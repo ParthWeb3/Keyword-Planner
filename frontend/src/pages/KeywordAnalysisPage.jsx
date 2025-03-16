@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/KeywordAnalysisPage.css';
+import { searchKeywords, getKeywordTrends } from '../services/keywordService';
+import TrendsModal from '../components/TrendsModal'; // Add this import
 
 const KeywordAnalysisPage = () => {
-  const [keywords, setKeywords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activePlatform, setActivePlatform] = useState('all');
+  const [keywords, setKeywords] = useState([]); // State for keywords
+  const [loading, setLoading] = useState(true); // State for loading
+  const [error, setError] = useState(null); // State for errors
+  const [searchTerm, setSearchTerm] = useState(''); // State for search term
+  const [activePlatform, setActivePlatform] = useState('all'); // State for platform filter
+  const [trendsData, setTrendsData] = useState([]); // State for trends data
+  const [showTrendsModal, setShowTrendsModal] = useState(false); // State for modal visibility
 
   // Platforms list
   const platforms = [
@@ -49,18 +53,36 @@ const KeywordAnalysisPage = () => {
     fetchKeywords();
   }, []);
 
+  const closeTrendsModal = () => setShowTrendsModal(false); // Close modal function
+
   // Filter keywords based on search term and platform
   const filteredKeywords = keywords.filter(keyword => 
     keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (activePlatform === 'all' || keyword.platform === activePlatform)
   );
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     setSearchTerm(e.target.value);
+    try {
+      const results = await searchKeywords(e.target.value);
+      setKeywords(results);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    }
   };
 
   const handlePlatformChange = (platformId) => {
     setActivePlatform(platformId);
+  };
+
+  const handleViewTrends = async (keywordId) => {
+    try {
+      const trends = await getKeywordTrends(keywordId); // Fetch trends data
+      setTrendsData(trends); // Update trends data state
+      setShowTrendsModal(true); // Show modal
+    } catch (error) {
+      console.error('Error fetching trends:', error);
+    }
   };
 
   if (loading) return <div className="loading">Loading keyword data...</div>;
@@ -99,6 +121,7 @@ const KeywordAnalysisPage = () => {
               <th>Keyword</th>
               <th>Search Volume</th>
               <th>Competition</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -107,12 +130,24 @@ const KeywordAnalysisPage = () => {
                 <td>{keyword.keyword}</td>
                 <td>{keyword.searchVolume.toLocaleString()}</td>
                 <td>{keyword.competition}</td>
+                <td>
+                  <button
+                    onClick={() => handleViewTrends(keyword.id)}
+                    className="view-trends-button"
+                  >
+                    View Trends
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
         <div className="no-results">No keywords found. Try a different search term.</div>
+      )}
+
+      {showTrendsModal && (
+        <TrendsModal trendsData={trendsData} onClose={closeTrendsModal} />
       )}
     </div>
   );
