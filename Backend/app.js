@@ -1,18 +1,16 @@
-// backend/app.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Import routes (we'll create these later)
+// Import routes
 const keywordRoutes = require('./routes/keywordRoutes');
-const authRoutes = require('./routes/authRoutes');
 
 // Initialize express app
 const app = express();
 
 // Load environment variables
-dotenv.config({ path: './.env' }); // Ensure the .env file is in the root of the Backend directory
+dotenv.config(); // Ensure this is called before accessing process.env
 
 // Middleware
 app.use(express.json());
@@ -24,18 +22,21 @@ console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds if unable to connect
 })
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
   .catch((err) => {
-    console.error('MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err.message);
+    if (err.message.includes('querySrv ENOTFOUND')) {
+      console.error('Check your MongoDB URI and ensure the cluster URL is correct.');
+    }
     process.exit(1); // Exit the process if the database connection fails
   });
 
 // Routes
 app.use('/api/keywords', keywordRoutes);
-app.use('/api/auth', authRoutes);
 
 // Default route
 app.get('/', (req, res) => {
@@ -48,9 +49,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Remove app.listen() from here
-
+// Export the app
 module.exports = app;
-
-
-// Ensure the .env file is created in the root directory with the required variables

@@ -6,13 +6,13 @@ const keywordSchema = new mongoose.Schema({
   searchVolume: { type: Number, required: true },
   competition: { type: String, required: true },
   platform: { type: String },
-  searchVolumeTrends: [
+searchVolumeTrends: [
     {
-      month: { type: String },
-      year: { type: Number },
-      volume: { type: Number },
-    },
-  ],
+month: { type: String },
+year: { type: Number },
+    volume: { type: Number }
+  }
+]
 });
 
 module.exports = mongoose.model('Keyword', keywordSchema);

@@ -1,9 +1,11 @@
 // src/services/keywordService.js
-import axiosInstance from './axiosInstance';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 export const getKeywords = async () => {
   try {
-    const response = await axiosInstance.get('/keywords');
+    const response = await axios.get(`${API_URL}/keywords`);
     return response.data;
   } catch (error) {
     console.error('Error fetching keywords:', error);
@@ -13,7 +15,7 @@ export const getKeywords = async () => {
 
 export const searchKeywords = async (term) => {
   try {
-    const response = await axiosInstance.get(`/keywords/suggestions?term=${term}`);
+    const response = await axios.get(`${API_URL}/keywords/suggestions?term=${term}`);
     return response.data;
   } catch (error) {
     console.error('Error searching keywords:', error);
@@ -23,7 +25,7 @@ export const searchKeywords = async (term) => {
 
 export const getKeywordByTerm = async (term) => {
   try {
-    const response = await axiosInstance.get(`/keywords/${term}`);
+    const response = await axios.get(`${API_URL}/keywords/${term}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching keyword details:', error);
@@ -33,20 +35,10 @@ export const getKeywordByTerm = async (term) => {
 
 export const createKeyword = async (keywordData) => {
   try {
-    const response = await axiosInstance.post('/keywords', keywordData);
+    const response = await axios.post(`${API_URL}/keywords`, keywordData);
     return response.data;
   } catch (error) {
     console.error('Error creating keyword:', error);
-    throw error;
-  }
-};
-
-export const getKeywordTrends = async (keywordId) => {
-  try {
-    const response = await axiosInstance.get(`/keywords/trends/${keywordId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching trends:', error);
     throw error;
   }
 };

@@ -1,47 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/KeywordAnalysisPage.css';
-import { searchKeywords, getKeywordTrends } from '../services/keywordService';
-import TrendsModal from '../components/TrendsModal'; // Add this import
+import { searchKeywords } from '../services/keywordService';
 
 const KeywordAnalysisPage = () => {
-  const [keywords, setKeywords] = useState([]); // State for keywords
-  const [loading, setLoading] = useState(true); // State for loading
-  const [error, setError] = useState(null); // State for errors
-  const [searchTerm, setSearchTerm] = useState(''); // State for search term
-  const [activePlatform, setActivePlatform] = useState('all'); // State for platform filter
-  const [trendsData, setTrendsData] = useState([]); // State for trends data
-  const [showTrendsModal, setShowTrendsModal] = useState(false); // State for modal visibility
+  const [keywords, setKeywords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activePlatform, setActivePlatform] = useState('google'); // Default to "Google"
+  const [language, setLanguage] = useState('English'); // Default language
 
-  // Platforms list
   const platforms = [
-    { id: 'all', name: 'All Platforms' },
+    { id: 'google', name: 'Google' },
     { id: 'instagram', name: 'Instagram' },
+    { id: 'amazon', name: 'Amazon' },
     { id: 'facebook', name: 'Facebook' },
     { id: 'twitter', name: 'Twitter' },
     { id: 'linkedin', name: 'LinkedIn' },
-    { id: 'tiktok', name: 'TikTok' }
+    { id: 'tiktok', name: 'TikTok' },
   ];
 
-  // Mock data - Replace with actual API call
+  const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
+
   useEffect(() => {
     const fetchKeywords = async () => {
       try {
-        // In a real app, this would be an API call
-        // const response = await fetch('/api/keywords');
-        // const data = await response.json();
-        
-        // Mock data for now
+        setLoading(true);
         const mockData = [
-          { id: 1, keyword: 'social media marketing', searchVolume: 8500, competition: 'High' },
-          { id: 2, keyword: 'content strategy', searchVolume: 4200, competition: 'Medium' },
-          { id: 3, keyword: 'instagram hashtags', searchVolume: 7800, competition: 'Medium' },
-          { id: 4, keyword: 'facebook ads', searchVolume: 9200, competition: 'High' },
-          { id: 5, keyword: 'twitter engagement', searchVolume: 3100, competition: 'Low' },
-          { id: 6, keyword: 'linkedin b2b marketing', searchVolume: 2700, competition: 'Medium' },
-          { id: 7, keyword: 'tiktok trends', searchVolume: 12400, competition: 'High' },
-          { id: 8, keyword: 'social media analytics', searchVolume: 5600, competition: 'Medium' },
+          { id: 1, keyword: 'social media marketing', searchVolume: 8500, competition: 'High', platform: 'google' },
+          { id: 2, keyword: 'content strategy', searchVolume: 4200, competition: 'Medium', platform: 'instagram' },
+          { id: 3, keyword: 'amazon deals', searchVolume: 7800, competition: 'Medium', platform: 'amazon' },
+          { id: 4, keyword: 'facebook ads', searchVolume: 9200, competition: 'High', platform: 'facebook' },
+          { id: 5, keyword: 'twitter engagement', searchVolume: 3100, competition: 'Low', platform: 'twitter' },
+          { id: 6, keyword: 'linkedin b2b marketing', searchVolume: 2700, competition: 'Medium', platform: 'linkedin' },
+          { id: 7, keyword: 'tiktok trends', searchVolume: 12400, competition: 'High', platform: 'tiktok' },
+          { id: 8, keyword: 'social media analytics', searchVolume: 5600, competition: 'Medium', platform: 'google' },
         ];
-        
         setKeywords(mockData);
         setLoading(false);
       } catch (err) {
@@ -53,36 +47,33 @@ const KeywordAnalysisPage = () => {
     fetchKeywords();
   }, []);
 
-  const closeTrendsModal = () => setShowTrendsModal(false); // Close modal function
-
-  // Filter keywords based on search term and platform
-  const filteredKeywords = keywords.filter(keyword => 
-    keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (activePlatform === 'all' || keyword.platform === activePlatform)
+  // Filter keywords based on search term and active platform
+  const filteredKeywords = keywords.filter(
+    (keyword) =>
+      keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (activePlatform === 'all' || keyword.platform === activePlatform)
   );
 
-  const handleSearch = async (e) => {
-    setSearchTerm(e.target.value);
+  // Handle search functionality
+  const handleSearch = async () => {
     try {
-      const results = await searchKeywords(e.target.value);
+      setLoading(true);
+      const results = await searchKeywords(searchTerm);
       setKeywords(results);
+      setLoading(false);
     } catch (error) {
-      console.error('Error fetching suggestions:', error);
+      setError('Error fetching suggestions');
+      setLoading(false);
     }
   };
 
+  // Handle platform selection
   const handlePlatformChange = (platformId) => {
     setActivePlatform(platformId);
   };
 
-  const handleViewTrends = async (keywordId) => {
-    try {
-      const trends = await getKeywordTrends(keywordId); // Fetch trends data
-      setTrendsData(trends); // Update trends data state
-      setShowTrendsModal(true); // Show modal
-    } catch (error) {
-      console.error('Error fetching trends:', error);
-    }
+  const handleLanguageChange = (e) => {
+    setLanguage(e.target.value);
   };
 
   if (loading) return <div className="loading">Loading keyword data...</div>;
@@ -90,20 +81,38 @@ const KeywordAnalysisPage = () => {
 
   return (
     <div className="keyword-analysis-page">
-      <h1 className="page-title">Keyword Analysis</h1>
-      
+      <h1 className="page-title">Find Awesome Keywords On Various Platforms</h1>
+
       <div className="search-container">
         <input
           type="text"
           placeholder="Search for keywords..."
           value={searchTerm}
-          onChange={handleSearch}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
+          list="keyword-suggestions" // Future autocomplete capability
         />
+        <datalist id="keyword-suggestions">
+          {/* Placeholder for future autocomplete suggestions */}
+        </datalist>
+        <select
+          value={language}
+          onChange={handleLanguageChange}
+          className="language-selector"
+        >
+          {languages.map((lang) => (
+            <option key={lang} value={lang}>
+              {lang}
+            </option>
+          ))}
+        </select>
+        <button onClick={handleSearch} className="search-button">
+          Search
+        </button>
       </div>
-      
+
       <div className="platform-selector">
-        {platforms.map(platform => (
+        {platforms.map((platform) => (
           <button
             key={platform.id}
             onClick={() => handlePlatformChange(platform.id)}
@@ -113,7 +122,7 @@ const KeywordAnalysisPage = () => {
           </button>
         ))}
       </div>
-      
+
       {filteredKeywords.length > 0 ? (
         <table className="keyword-table">
           <thead>
@@ -121,33 +130,22 @@ const KeywordAnalysisPage = () => {
               <th>Keyword</th>
               <th>Search Volume</th>
               <th>Competition</th>
-              <th>Actions</th>
+              <th>Platform</th>
             </tr>
           </thead>
           <tbody>
-            {filteredKeywords.map(keyword => (
+            {filteredKeywords.map((keyword) => (
               <tr key={keyword.id}>
                 <td>{keyword.keyword}</td>
                 <td>{keyword.searchVolume.toLocaleString()}</td>
                 <td>{keyword.competition}</td>
-                <td>
-                  <button
-                    onClick={() => handleViewTrends(keyword.id)}
-                    className="view-trends-button"
-                  >
-                    View Trends
-                  </button>
-                </td>
+                <td>{keyword.platform}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
         <div className="no-results">No keywords found. Try a different search term.</div>
-      )}
-
-      {showTrendsModal && (
-        <TrendsModal trendsData={trendsData} onClose={closeTrendsModal} />
       )}
     </div>
   );
