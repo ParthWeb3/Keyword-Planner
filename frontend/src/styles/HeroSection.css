@@ -81,6 +81,7 @@
   letter-spacing: 2px;
   background: linear-gradient(90deg, #ff8a00, #e52e71);
   -webkit-background-clip: text;
+  background-clip: text; /* Standard property added */
   -webkit-text-fill-color: transparent;
   animation: fadeIn 1.5s ease-in-out;
 }

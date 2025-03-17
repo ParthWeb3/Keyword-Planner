@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/KeywordAnalysisPage.css';
 import { searchKeywords } from '../services/keywordService';
+import KeywordSuggestionsTable from '../components/KeywordSuggestionsTable';
+import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 
 const KeywordAnalysisPage = () => {
   const [keywords, setKeywords] = useState([]);
@@ -9,6 +11,7 @@ const KeywordAnalysisPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activePlatform, setActivePlatform] = useState('google'); // Default to "Google"
   const [language, setLanguage] = useState('English'); // Default language
+  const [retryCount, setRetryCount] = useState(0); // Track retry attempts
 
   const platforms = [
     { id: 'google', name: 'Google' },
@@ -27,25 +30,29 @@ const KeywordAnalysisPage = () => {
       try {
         setLoading(true);
         const mockData = [
-          { id: 1, keyword: 'social media marketing', searchVolume: 8500, competition: 'High', platform: 'google' },
-          { id: 2, keyword: 'content strategy', searchVolume: 4200, competition: 'Medium', platform: 'instagram' },
-          { id: 3, keyword: 'amazon deals', searchVolume: 7800, competition: 'Medium', platform: 'amazon' },
-          { id: 4, keyword: 'facebook ads', searchVolume: 9200, competition: 'High', platform: 'facebook' },
-          { id: 5, keyword: 'twitter engagement', searchVolume: 3100, competition: 'Low', platform: 'twitter' },
-          { id: 6, keyword: 'linkedin b2b marketing', searchVolume: 2700, competition: 'Medium', platform: 'linkedin' },
-          { id: 7, keyword: 'tiktok trends', searchVolume: 12400, competition: 'High', platform: 'tiktok' },
-          { id: 8, keyword: 'social media analytics', searchVolume: 5600, competition: 'Medium', platform: 'google' },
+          { id: 1, keyword: 'social media marketing', searchVolume: 8500, cpc: 1.2, competition: 'High', platform: 'google' },
+          { id: 2, keyword: 'content strategy', searchVolume: 4200, cpc: 0.8, competition: 'Medium', platform: 'instagram' },
+          { id: 3, keyword: 'amazon deals', searchVolume: 7800, cpc: 1.5, competition: 'Medium', platform: 'amazon' },
+          { id: 4, keyword: 'facebook ads', searchVolume: 9200, cpc: 2.0, competition: 'High', platform: 'facebook' },
+          { id: 5, keyword: 'twitter engagement', searchVolume: 3100, cpc: 0.5, competition: 'Low', platform: 'twitter' },
+          { id: 6, keyword: 'linkedin b2b marketing', searchVolume: 2700, cpc: 1.8, competition: 'Medium', platform: 'linkedin' },
+          { id: 7, keyword: 'tiktok trends', searchVolume: 12400, cpc: 1.0, competition: 'High', platform: 'tiktok' },
+          { id: 8, keyword: 'social media analytics', searchVolume: 5600, cpc: 1.3, competition: 'Medium', platform: 'google' },
         ];
         setKeywords(mockData);
         setLoading(false);
       } catch (err) {
-        setError('Failed to fetch keywords');
-        setLoading(false);
+        if (retryCount < 3) {
+          setRetryCount(retryCount + 1);
+        } else {
+          setError('Failed to fetch keywords after multiple attempts.');
+          setLoading(false);
+        }
       }
     };
 
     fetchKeywords();
-  }, []);
+  }, [retryCount]);
 
   // Filter keywords based on search term and active platform
   const filteredKeywords = keywords.filter(
@@ -123,27 +130,17 @@ const KeywordAnalysisPage = () => {
         ))}
       </div>
 
+      <div className="export-buttons">
+        <button onClick={() => exportToCSV(keywords)} className="export-button">
+          Export to CSV
+        </button>
+        <button onClick={() => exportToPDF(keywords)} className="export-button">
+          Export to PDF
+        </button>
+      </div>
+
       {filteredKeywords.length > 0 ? (
-        <table className="keyword-table">
-          <thead>
-            <tr>
-              <th>Keyword</th>
-              <th>Search Volume</th>
-              <th>Competition</th>
-              <th>Platform</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredKeywords.map((keyword) => (
-              <tr key={keyword.id}>
-                <td>{keyword.keyword}</td>
-                <td>{keyword.searchVolume.toLocaleString()}</td>
-                <td>{keyword.competition}</td>
-                <td>{keyword.platform}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <KeywordSuggestionsTable data={filteredKeywords} />
       ) : (
         <div className="no-results">No keywords found. Try a different search term.</div>
       )}
