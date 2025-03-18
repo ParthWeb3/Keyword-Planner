@@ -26,6 +26,10 @@ class KeywordSearchService {
     const keywordSearch = new KeywordSearch(data);
     await keywordSearch.save();
   }
+
+  static async getRecentSearches(limit = 10) {
+    return await KeywordSearch.find().sort({ searchTimestamp: -1 }).limit(limit);
+  }
 }
 
 module.exports = KeywordSearchService;

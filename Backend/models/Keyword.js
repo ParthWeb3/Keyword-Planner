@@ -1,4 +1,3 @@
-// backend/models/Keyword.js
 const mongoose = require('mongoose');
 
 const keywordSchema = new mongoose.Schema({
@@ -6,13 +5,14 @@ const keywordSchema = new mongoose.Schema({
   searchVolume: { type: Number, required: true },
   competition: { type: String, required: true },
   platform: { type: String },
-searchVolumeTrends: [
+  searchVolumeTrends: [
     {
-month: { type: String },
-year: { type: Number },
-    volume: { type: Number }
-  }
-]
-});
-
+      month: { type: String, required: true },
+      year: { type: Number, required: true },
+      volume: { type: Number, required: true },
+    },
+  ],
+  deleted: { type: Boolean, default: false }, // Add soft delete field
+}, { timestamps: true });
+.exports = mongoose.model('Keyword', keywordSchema);
 module.exports = mongoose.model('Keyword', keywordSchema);

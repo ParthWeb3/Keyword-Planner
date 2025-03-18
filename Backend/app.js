@@ -49,6 +49,8 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.error('MongoDB connection error:', err.message);
     if (err.message.includes('querySrv ENOTFOUND')) {
       console.error('Check your MongoDB URI and ensure the cluster URL is correct.');
+    } else if (err.message.includes('authentication failed')) {
+      console.error('Authentication failed. Check your username and password.');
     }
     process.exit(1); // Exit the process if the database connection fails
   });
