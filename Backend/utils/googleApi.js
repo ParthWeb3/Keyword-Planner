@@ -1,4 +1,4 @@
-const { GoogleAdsApi } = require('@google-ads/api');
+const { google } = require('googleapis'); // Import googleapis
 const redis = require('redis');
 const util = require('util');
 const { APIError } = require('./errors');
@@ -12,86 +12,53 @@ class GoogleAdsService {
     this.redisClient.get = util.promisify(this.redisClient.get);
     this.redisClient.setex = util.promisify(this.redisClient.setex);
 
-    this.googleAdsApi = new GoogleAdsApi({
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      developer_token: this.developerToken,
+    this.auth = new google.auth.OAuth2(clientId, clientSecret);
+    this.auth.setCredentials({
+      refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
     });
 
-    this.failureCount = 0;
-    this.circuitBreakerOpen = false;
-    this.maxFailures = 3;
-    this.resetTimeout = 30000; // 30 seconds
+    this.apiEndpoint = 'https://googleads.googleapis.com/v13/customers/5212233347/googleAds:search';
   }
 
-  async fetchKeywordData({ keyword, location, language, searchNetwork }) {
-    if (this.circuitBreakerOpen) {
-      throw new APIError('Circuit breaker is open. External API unavailable.', 503);
-    }
-
-    const cacheKey = `keyword:${keyword}:${location}:${language}:${searchNetwork}`;
+  async fetchKeywordData({ keyword }) {
+    const cacheKey = `keyword:${keyword}`;
     const cachedData = await this.redisClient.get(cacheKey);
 
     if (cachedData) {
       return JSON.parse(cachedData);
     }
 
-    let attempts = 0;
-    while (attempts < 3) {
-      try {
-        const customer = this.googleAdsApi.Customer({
-          customer_id: process.env.GOOGLE_ADS_CUSTOMER_ID,
-          refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
-        });
+    try {
+      const response = await google.ads({
+        version: 'v13',
+        auth: this.auth,
+      }).customers.googleAds.search({
+        customerId: process.env.GOOGLE_ADS_CUSTOMER_ID,
+        requestBody: {
+          query: `SELECT campaign.id, ad_group.id, metrics.impressions, metrics.clicks, metrics.average_cpc
+                  FROM keyword_view
+                  WHERE segments.keyword.info.text = '${keyword}'`,
+        },
+      });
 
-        const response = await customer.keywordPlanIdeas({
-          keyword_texts: [keyword],
-          geo_target_constants: [location],
-          language: language,
-          network: searchNetwork,
-        });
-
-        const formattedData = this.formatApiResponse(response);
-        await this.redisClient.setex(cacheKey, 3600, JSON.stringify(formattedData)); // Cache for 1 hour
-        this.resetCircuitBreaker();
-        return formattedData;
-      } catch (error) {
-        attempts++;
-        console.error(`Attempt ${attempts} failed:`, error.message);
-        if (attempts >= 3) {
-          this.recordFailure();
-          throw new APIError('Failed to fetch keyword data from Google Ads API', 502);
-        }
-      }
+      const formattedData = this.formatApiResponse(response.data);
+      await this.redisClient.setex(cacheKey, 3600, JSON.stringify(formattedData)); // Cache for 1 hour
+      return formattedData;
+    } catch (error) {
+      console.error('Error fetching keyword data:', error.message);
+      throw new APIError('Failed to fetch keyword data from Google Ads API', 502);
     }
-  }
-
-  recordFailure() {
-    this.failureCount++;
-    if (this.failureCount >= this.maxFailures) {
-      this.circuitBreakerOpen = true;
-      console.error('Circuit breaker opened. External API calls disabled.');
-      setTimeout(() => this.resetCircuitBreaker(), this.resetTimeout);
-    }
-  }
-
-  resetCircuitBreaker() {
-    this.failureCount = 0;
-    this.circuitBreakerOpen = false;
-    console.log('Circuit breaker reset. External API calls re-enabled.');
   }
 
   formatApiResponse(response) {
     return response.results.map((result) => ({
       keyword: result.text,
-      avgMonthlySearches: result.keyword_idea_metrics.avg_monthly_searches || 0,
-      competition: result.keyword_idea_metrics.competition_level || 'LOW',
+      avgMonthlySearches: result.metrics.avg_monthly_searches || 0,
+      competition: result.metrics.competition_level || 'LOW',
       cpcRange: {
-        min: result.keyword_idea_metrics.low_top_of_page_bid_micros / 1e6 || 0,
-        max: result.keyword_idea_metrics.high_top_of_page_bid_micros / 1e6 || 0,
+        min: result.metrics.low_top_of_page_bid_micros / 1e6 || 0,
+        max: result.metrics.high_top_of_page_bid_micros / 1e6 || 0,
       },
-      relatedKeywords: result.keyword_idea_metrics.related_keywords || [],
-      source: 'Google Ads',
     }));
   }
 }

@@ -124,11 +124,10 @@ exports.findSuggestions = async (req, res) => {
 
 exports.analyzeKeyword = async (req, res, next) => {
   try {
-    // Validate and sanitize inputs
     const params = keywordSchema.parse(req.query);
 
-    // Fetch aggregated data from multiple sources
-    const unifiedData = await dataAggregator.fetchAggregatedData(params);
+    // Fetch data from Google Ads API
+    const unifiedData = await googleAdsService.fetchKeywordData(params);
 
     // Enforce memory limit
     dataAggregator.enforceMemoryLimit(unifiedData);

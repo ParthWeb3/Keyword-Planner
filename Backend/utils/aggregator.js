@@ -212,10 +212,10 @@ class DataAggregator {
   processBulkRequests(stream, filters) {
     const transformStream = new Transform({
       objectMode: true,
-      transform(chunk, encoding, callback) {
+      transform: (chunk, encoding, callback) => {
         const filtered = this.filterResults([chunk], filters);
         callback(null, filtered.length ? filtered[0] : null);
-      }.bind(this),
+      }
     });
 
     return stream.pipe(transformStream);

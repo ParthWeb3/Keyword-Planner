@@ -1,0 +1,12 @@
+{
+  "name": "keyword-planner",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"npm start --prefix frontend\" \"npm run dev --prefix backend\"",
+    "install-all": "npm install --prefix frontend && npm install --prefix Backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
