@@ -42,3 +42,13 @@ export const createKeyword = async (keywordData) => {
     throw error;
   }
 };
+
+export const fetchKeywordSuggestions = async (keyword) => {
+  try {
+    const response = await axios.get(`${API_URL}/keywords/suggestions?term=${keyword}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching keyword suggestions:', error);
+    throw error;
+  }
+};
