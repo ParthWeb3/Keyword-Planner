@@ -10,6 +10,7 @@ const {
 const DataAggregator = require('../utils/aggregator');
 const { ValidationError } = require('../utils/errors');
 const Autocomplete = require('../utils/autocomplete');
+const { getKeywordSuggestions } = require('../utils/googleApi'); // Updated to ChatGPT service
 
 // Initialize GoogleAdsService
 const googleAdsService = new GoogleAdsService(
@@ -124,52 +125,13 @@ exports.findSuggestions = async (req, res) => {
 
 exports.analyzeKeyword = async (req, res, next) => {
   try {
-    const params = keywordSchema.parse(req.query);
+    const { keyword } = keywordSchema.parse(req.query);
 
-    // Fetch data from Google Ads API
-    const unifiedData = await googleAdsService.fetchKeywordData(params);
+    const suggestions = await getKeywordSuggestions(keyword);
 
-    // Enforce memory limit
-    dataAggregator.enforceMemoryLimit(unifiedData);
-
-    // Apply intelligent filtering
-    const filters = {
-      minSearchVolume: req.query.minSearchVolume ? parseInt(req.query.minSearchVolume) : null,
-      maxCompetition: req.query.maxCompetition ? parseFloat(req.query.maxCompetition) : null,
-    };
-
-    // Stream processing for bulk requests
-    if (req.body.bulkData) {
-      const bulkStream = dataAggregator.processBulkRequests(req.body.bulkData, filters);
-      bulkStream.pipe(res);
-      return;
-    }
-
-    const filteredData = dataAggregator.filterResults(unifiedData, filters);
-
-    // Pagination logic
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const startIndex = (page - 1) * limit;
-    const paginatedSuggestions = filteredData.slice(startIndex, startIndex + limit);
-
-    // Standardized response format
     const response = {
       success: true,
-      data: {
-        keywordSuggestions: paginatedSuggestions.map((item) => item.keyword),
-        searchVolume: {
-          current: params.keyword,
-          historical: filteredData.map((item) => item.metrics.search_volume.current),
-        },
-        cpc: {
-          min: Math.min(...filteredData.map((item) => item.metrics.cpc.min)),
-          max: Math.max(...filteredData.map((item) => item.metrics.cpc.max)),
-        },
-        trends: {
-          trend: filteredData[0]?.metrics.search_volume.trend || 'stable',
-        },
-      },
+      data: suggestions,
     };
 
     res.json(response);

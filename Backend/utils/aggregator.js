@@ -187,23 +187,8 @@ class DataAggregator {
     return data.map((item) => ({
       keyword: item.keyword,
       metrics: {
-        search_volume: {
-          current: item.avgMonthlySearches,
-          trend: item.trend || '→',
-          seasonality: item.movingAverage || 0,
-        },
-        cpc: {
-          min: item.cpcRange?.min || 0,
-          max: item.cpcRange?.max || 0,
-        },
-        competition: {
-          level: item.competition || 'LOW',
-          score: item.competitionScore || 0,
-        },
-      },
-      semantic_analysis: {
-        ls_keywords: item.lsiKeywords || [],
-        entity_relations: item.competitors || [],
+        search_volume: item.searchVolume,
+        difficulty: item.difficulty,
       },
     }));
   }

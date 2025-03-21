@@ -39,9 +39,12 @@ app.use(limiter);
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds if unable to connect
-})
+mongoose.connect(
+  `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_CLUSTER_URL}/${process.env.MONGO_DATABASE}?retryWrites=true&w=majority`,
+  {
+    serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds if unable to connect
+  }
+)
   .then(() => {
     console.log('Connected to MongoDB');
   })

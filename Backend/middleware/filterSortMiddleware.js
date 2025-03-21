@@ -9,12 +9,15 @@ const filterAndSortMiddleware = async (req, res, next) => {
       trend,
       includeTerms,
       excludeTerms,
-      sortBy,
+      page = 1,
+      limit = 10,
+      sortBy = 'searchVolume',
+      order = 'desc',
     } = req.query;
 
     // Build filtering criteria
     const filterCriteria = {};
-    if (minSearchVolume) filterCriteria.searchVolume = { $gte: parseInt(minSearchVolume) };
+    if (minSearchVolume) filterCriteria['metrics.search_volume'] = { $gte: parseInt(minSearchVolume) };
     if (maxSearchVolume) filterCriteria.searchVolume = { ...filterCriteria.searchVolume, $lte: parseInt(maxSearchVolume) };
     if (competitionLevel) filterCriteria.competition = competitionLevel.toUpperCase();
     if (trend) filterCriteria.trend = trend.toLowerCase();
@@ -22,23 +25,14 @@ const filterAndSortMiddleware = async (req, res, next) => {
     if (excludeTerms) filterCriteria.keyword = { ...filterCriteria.keyword, $not: new RegExp(excludeTerms, 'i') };
 
     // Build sorting criteria
-    const sortCriteria = {};
-    switch (sortBy) {
-      case 'searchVolume':
-        sortCriteria.searchVolume = -1; // Descending
-        break;
-      case 'competition':
-        sortCriteria.competition = 1; // Ascending
-        break;
-      case 'trend':
-        sortCriteria.trend = 1; // Rising first
-        break;
-      default:
-        sortCriteria.relevance = 1; // Default sorting by relevance
-    }
+    const sortCriteria = { [sortBy]: order === 'desc' ? -1 : 1 };
 
-    // Fetch filtered and sorted results
-    const keywords = await Keyword.find(filterCriteria).sort(sortCriteria);
+    // Fetch filtered and sorted results with pagination
+    const keywords = await Keyword.find(filterCriteria)
+      .sort(sortCriteria)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
     res.locals.keywords = keywords; // Pass results to the next middleware
     next();
   } catch (error) {

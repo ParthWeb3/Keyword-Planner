@@ -1,23 +1,19 @@
-const { google } = require('googleapis'); // Import googleapis
+import OpenAI from 'openai';
 const redis = require('redis');
 const util = require('util');
 const { APIError } = require('./errors');
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 10000,
+  maxRetries: 3,
+});
+
 class GoogleAdsService {
-  constructor(clientId, clientSecret, developerToken, redisUrl) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
-    this.developerToken = developerToken;
+  constructor(redisUrl) {
     this.redisClient = redis.createClient({ url: redisUrl });
     this.redisClient.get = util.promisify(this.redisClient.get);
     this.redisClient.setex = util.promisify(this.redisClient.setex);
-
-    this.auth = new google.auth.OAuth2(clientId, clientSecret);
-    this.auth.setCredentials({
-      refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
-    });
-
-    this.apiEndpoint = 'https://googleads.googleapis.com/v13/customers/5212233347/googleAds:search';
   }
 
   async fetchKeywordData({ keyword }) {
@@ -29,37 +25,32 @@ class GoogleAdsService {
     }
 
     try {
-      const response = await google.ads({
-        version: 'v13',
-        auth: this.auth,
-      }).customers.googleAds.search({
-        customerId: process.env.GOOGLE_ADS_CUSTOMER_ID,
-        requestBody: {
-          query: `SELECT campaign.id, ad_group.id, metrics.impressions, metrics.clicks, metrics.average_cpc
-                  FROM keyword_view
-                  WHERE segments.keyword.info.text = '${keyword}'`,
-        },
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `Generate 10 SEO keywords related to ${keyword} with search volume estimates in JSON format`,
+          },
+        ],
+        temperature: 0.7,
+        stream: true, // Enable streaming for faster response
       });
 
-      const formattedData = this.formatApiResponse(response.data);
+      let result = '';
+      for await (const chunk of response) {
+        result += chunk.choices[0].delta.content || '';
+      }
+
+      const jsonMatch = result.match(/```json([\s\S]*?)```/);
+      if (!jsonMatch) throw new Error("ChatGPT response format error");
+      const formattedData = JSON.parse(jsonMatch[1]);
       await this.redisClient.setex(cacheKey, 3600, JSON.stringify(formattedData)); // Cache for 1 hour
       return formattedData;
     } catch (error) {
-      console.error('Error fetching keyword data:', error.message);
-      throw new APIError('Failed to fetch keyword data from Google Ads API', 502);
+      console.error("Error fetching keyword suggestions:", error.message);
+      throw new APIError('Failed to fetch keyword suggestions from ChatGPT API', 502);
     }
-  }
-
-  formatApiResponse(response) {
-    return response.results.map((result) => ({
-      keyword: result.text,
-      avgMonthlySearches: result.metrics.avg_monthly_searches || 0,
-      competition: result.metrics.competition_level || 'LOW',
-      cpcRange: {
-        min: result.metrics.low_top_of_page_bid_micros / 1e6 || 0,
-        max: result.metrics.high_top_of_page_bid_micros / 1e6 || 0,
-      },
-    }));
   }
 }
 
