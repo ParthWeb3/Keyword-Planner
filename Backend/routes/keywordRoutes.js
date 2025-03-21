@@ -21,7 +21,7 @@ router.get('/api/keyword-analysis', analyzeKeyword); // Ensure this route is def
 
 router.get('/test-google-ads', async (req, res) => {
   try {
-    const googleAdsService = new (require('../utils/googleApi'))(
+    const googleAdsService = new (require('../utils/chatGapi'))( // Updated from googleApi to chatGapi
       process.env.GOOGLE_ADS_CLIENT_ID,
       process.env.GOOGLE_ADS_CLIENT_SECRET,
       process.env.GOOGLE_ADS_DEVELOPER_TOKEN,

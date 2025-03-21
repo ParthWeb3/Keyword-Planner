@@ -1,1 +1,2 @@
-git add Backend/google-credentials.json
+# Ignore sensitive files
+.env

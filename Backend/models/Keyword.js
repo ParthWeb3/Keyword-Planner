@@ -14,5 +14,4 @@ const keywordSchema = new mongoose.Schema({
   ],
   deleted: { type: Boolean, default: false }, // Add soft delete field
 }, { timestamps: true });
-.exports = mongoose.model('Keyword', keywordSchema);
 module.exports = mongoose.model('Keyword', keywordSchema);

@@ -36,26 +36,17 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Debug log for MONGODB_URI
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
+console.log('Connecting to MongoDB:', process.env.MONGODB_URI);
 
 // Connect to MongoDB
-mongoose.connect(
-  `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_CLUSTER_URL}/${process.env.MONGO_DATABASE}?retryWrites=true&w=majority`,
-  {
-    serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds if unable to connect
-  }
-)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('Connected to MongoDB'))
   .catch((err) => {
     console.error('MongoDB connection error:', err.message);
-    if (err.message.includes('querySrv ENOTFOUND')) {
-      console.error('Check your MongoDB URI and ensure the cluster URL is correct.');
-    } else if (err.message.includes('authentication failed')) {
-      console.error('Authentication failed. Check your username and password.');
-    }
-    process.exit(1); // Exit the process if the database connection fails
+    process.exit(1); // Exit if connection fails
   });
 
 // Routes

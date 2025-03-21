@@ -1,7 +1,7 @@
 // backend/controllers/keywordController.js
 const Keyword = require('../models/Keyword');
 const { z } = require('zod');
-const GoogleAdsService = require('../utils/googleApi');
+const GoogleAdsService = require('../utils/chatGapi'); // Updated from googleApi to chatGapi
 const {
   GoogleAdsProvider,
   GoogleTrendsProvider,
@@ -10,7 +10,7 @@ const {
 const DataAggregator = require('../utils/aggregator');
 const { ValidationError } = require('../utils/errors');
 const Autocomplete = require('../utils/autocomplete');
-const { getKeywordSuggestions } = require('../utils/googleApi'); // Updated to ChatGPT service
+const { getKeywordSuggestions } = require('../utils/chatGapi'); // Updated from googleApi to chatGapi
 
 // Initialize GoogleAdsService
 const googleAdsService = new GoogleAdsService(
@@ -50,7 +50,8 @@ exports.getKeywords = async (req, res) => {
     const keywords = await Keyword.find();
     res.status(200).json(keywords);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching keywords:', error.message);
+    res.status(500).json({ message: 'Failed to fetch keywords' });
   }
 };
 
@@ -63,7 +64,8 @@ exports.getKeyword = async (req, res) => {
     }
     res.status(200).json(keyword);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching keyword:', error.message);
+    res.status(500).json({ message: 'Failed to fetch keyword' });
   }
 };
 
@@ -74,7 +76,8 @@ exports.createKeyword = async (req, res) => {
     const savedKeyword = await keyword.save();
     res.status(201).json(savedKeyword);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error creating keyword:', error.message);
+    res.status(400).json({ message: 'Failed to create keyword' });
   }
 };
 
@@ -91,7 +94,8 @@ exports.updateKeyword = async (req, res) => {
     }
     res.status(200).json(keyword);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error updating keyword:', error.message);
+    res.status(400).json({ message: 'Failed to update keyword' });
   }
 };
 
@@ -104,7 +108,8 @@ exports.deleteKeyword = async (req, res) => {
     }
     res.status(200).json({ message: 'Keyword deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting keyword:', error.message);
+    res.status(500).json({ message: 'Failed to delete keyword' });
   }
 };
 
