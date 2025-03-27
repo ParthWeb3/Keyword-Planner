@@ -36,6 +36,21 @@ router.get('/test-google-ads', async (req, res) => {
   }
 });
 
+router.get('/test-openai', async (req, res) => {
+  try {
+    const GoogleAdsService = require('../utils/chatGapi');
+    const googleAdsService = new GoogleAdsService(process.env.REDIS_URL);
+
+    const keyword = req.query.keyword || 'example';
+    const data = await googleAdsService.fetchKeywordData({ keyword });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('Error in OpenAI test route:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/bulk-upload', upload.single('file'), async (req, res) => {
   try {
     const keywords = parseCSV(req.file.buffer); // Implement parseCSV utility

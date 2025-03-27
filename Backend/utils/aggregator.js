@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const { FourierTransform } = require('fourier-transform'); // Placeholder for Fourier transform library
-const Word2Vec = require('word2vec'); // Placeholder for Word2Vec library
+// const Word2Vec = require('word2vec'); // Removed as it's not installed
 const redis = require('redis');
 const { promisify } = require('util');
 const { Transform } = require('stream');
@@ -112,26 +112,21 @@ class DataAggregator {
   // Stage 3: Keyword Enrichment
   enrichKeywords(data) {
     return data.map((item) => {
-      const lsiKeywords = this.generateLSIKeywords(item.keyword);
+      // const lsiKeywords = this.generateLSIKeywords(item.keyword); // Removed
       const competitors = this.extractCompetitors(item.relatedKeywords);
 
       return {
         ...item,
-        lsiKeywords,
+        // lsiKeywords, // Removed
         competitors,
       };
     });
   }
 
-  generateLSIKeywords(keyword) {
-    // Placeholder for LSI keyword generation using NLP
-    return Word2Vec.getSimilarWords(keyword, 5);
-  }
-
-  extractCompetitors(relatedKeywords) {
-    if (!Array.isArray(relatedKeywords)) return [];
-    return relatedKeywords.filter((kw) => kw.includes('brand'));
-  }
+  // Removed generateLSIKeywords method as it depends on Word2Vec
+  // generateLSIKeywords(keyword) {
+  //   return Word2Vec.getSimilarWords(keyword, 5);
+  // }
 
   // Stage 4: Score Calculation
   calculateScores(data) {
