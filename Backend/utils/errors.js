@@ -1,17 +1,22 @@
 class APIError extends Error {
-  constructor(message, statusCode = 500) {
+  constructor(message, options = {}) {
     super(message);
     this.name = 'APIError';
-    this.statusCode = statusCode;
+    this.status = options.status || 500;
+    this.cause = options.cause;
+    this.context = options.context;
   }
 }
 
 class ValidationError extends Error {
-  constructor(message, statusCode = 400) {
+  constructor(message, details = {}) {
     super(message);
     this.name = 'ValidationError';
-    this.statusCode = statusCode;
+    this.details = details;
   }
 }
 
-module.exports = { APIError, ValidationError };
+module.exports = {
+  APIError,
+  ValidationError
+};

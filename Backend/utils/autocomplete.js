@@ -1,4 +1,4 @@
-const LRU = require('lru-cache');
+const { LRUCache } = require('lru-cache');
 
 class TrieNode {
   constructor() {
@@ -43,8 +43,8 @@ class Trie {
 
 class Autocomplete {
   constructor() {
+    this.cache = new LRUCache({ max: 1000 });
     this.trie = new Trie();
-    this.cache = new LRU({ max: 1000 }); // LRU cache with max 1000 entries
   }
 
   addKeyword(keyword, searchVolume) {

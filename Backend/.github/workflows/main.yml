@@ -1,0 +1,27 @@
+name: CI/CD Pipeline
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  REDIS_URL: ${{ secrets.REDIS_URL }}
+  NODE_ENV: test
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Run Tests
+        run: npm test
+      - name: Check SLA Compliance
+        run: |
+          RESPONSE_TIMES=$(curl -s http://localhost:3000/api/monitoring/metrics | jq .metrics.p99ResponseTime)
+          if [ "$RESPONSE_TIMES" -gt 2500 ]; then
+            echo "P99 response time exceeds SLA threshold"
+            exit 1
+          fi 

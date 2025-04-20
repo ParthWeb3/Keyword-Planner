@@ -7,11 +7,11 @@ const keywordSchema = new mongoose.Schema({
   platform: { type: String },
   searchVolumeTrends: [
     {
-      month: { type: String, required: true },
-      year: { type: Number, required: true },
-      volume: { type: Number, required: true },
+      month: { type: String },
+      year: { type: Number },
+      volume: { type: Number },
     },
   ],
-  deleted: { type: Boolean, default: false }, // Add soft delete field
-}, { timestamps: true });
+});
+
 module.exports = mongoose.model('Keyword', keywordSchema);

@@ -1,29 +1,54 @@
 // backend/server.js
-const dotenv = require('dotenv');
-dotenv.config(); // Ensure this is called before accessing process.env
-
+require('dotenv').config();
 const app = require('./app');
-const { Configuration, OpenAIApi } = require('openai');
+const logger = require('./utils/logger');
+const connectDB = require('./utils/db');
+const config = require('./config/config');
+const mongoose = require('mongoose');
 
-// Ensure OPENAI_API_KEY is set
-if (!process.env.OPENAI_API_KEY) {
-  console.error("Error: OPENAI_API_KEY is not set in the environment variables.");
-  process.exit(1); // Exit the application if the key is missing
+// Validate required environment variables
+const requiredEnvVars = ['MONGODB_URI', 'OPENAI_API_KEY', 'REDIS_URL', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  logger.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  process.exit(1);
 }
 
-// Ensure MONGODB_URI is set
-if (!process.env.MONGODB_URI) {
-  console.warn("Warning: MONGODB_URI is not set in the environment variables. Database connection may fail.");
-}
+const PORT = config.port;
 
-// Configure OpenAI API
-const openaiConfig = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY, // Ensure this is loaded correctly
+// Connect to MongoDB
+connectDB();
+
+// Error handling for uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
 });
-const openai = new OpenAIApi(openaiConfig);
 
-const PORT = process.env.PORT || 5001;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+process.on('unhandledRejection', (error) => {
+  logger.error('Unhandled Rejection:', error);
+  process.exit(1);
 });
+
+const server = app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT} in ${config.env} mode`);
+});
+
+// Graceful shutdown
+const shutdown = async () => {
+  logger.info('Shutting down gracefully...');
+  try {
+    await mongoose.connection.close();
+    server.close(() => {
+      logger.info('Process terminated');
+      process.exit(0);
+    });
+  } catch (err) {
+    logger.error('Error during shutdown:', err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

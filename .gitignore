@@ -1,3 +1,6 @@
 # ...existing content...
 Backend/.env
 # ...existing content...
+node_modules
+
+mkdir -p Backend/logs Backend/tests Backend/config Backend/middleware Backend/routes Backend/utils Backend/models

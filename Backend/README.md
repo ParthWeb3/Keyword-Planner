@@ -1,26 +1,43 @@
 # Backend API Documentation
 
-## Keyword Analysis Endpoint
+## API Endpoints
 
-### Description
-Fetch keyword suggestions using the ChatGPT API.
-
-### Request
+### Keyword Analysis
 **GET** `/api/keywords/analyze`
 
-#### Query Parameters
-- `keyword` (string, required): The seed keyword for generating suggestions.
+#### Request Parameters
+- `keyword` (string, required): Seed keyword for analysis
+- `userId` (string, optional): User identifier for rate limiting
 
-### Response
+#### Response Format
 ```json
 {
   "success": true,
-  "data": [
-    {
-      "keyword": "example keyword",
-      "searchVolume": 1000,
-      "difficulty": 3
-    }
-  ]
+  "data": {
+    "mainKeyword": {
+      "keyword": "string",
+      "searchVolume": number,
+      "competition": number,
+      "cpc": number
+    },
+    "relatedKeywords": [
+      {
+        "keyword": "string",
+        "searchVolume": number,
+        "competition": number,
+        "cpc": number
+      }
+    ]
+  }
 }
 ```
+
+#### Rate Limits
+- 100 requests/hour for keyword analysis
+- 200 requests/hour for suggestions
+- ChatGPT API: 50 requests/hour per user
+
+#### Error Codes
+- `429`: Rate limit exceeded
+- `400`: Invalid input parameters
+- `500`: ChatGPT API error

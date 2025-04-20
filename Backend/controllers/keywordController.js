@@ -1,30 +1,13 @@
 // backend/controllers/keywordController.js
 const Keyword = require('../models/Keyword');
 const { z } = require('zod');
-const GoogleAdsService = require('../utils/chatGapi'); // Updated from googleApi to chatGapi
-const {
-  GoogleAdsProvider,
-  GoogleTrendsProvider,
-  SEMrushProvider,
-} = require('../utils/dataProvider');
-const DataAggregator = require('../utils/aggregator');
+const KeywordService = require('../utils/chatGapi');
+const { getKeywordSuggestions } = require('../services/chatgpt-service');
 const { ValidationError } = require('../utils/errors');
 const Autocomplete = require('../utils/autocomplete');
-const { getKeywordSuggestions } = require('../utils/chatGapi'); // Updated from googleApi to chatGapi
 
-// Initialize GoogleAdsService
-const googleAdsService = new GoogleAdsService(
-  process.env.GOOGLE_ADS_CLIENT_ID,
-  process.env.GOOGLE_ADS_CLIENT_SECRET,
-  process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
-  process.env.REDIS_URL
-);
-
-// Initialize providers and aggregator
-const googleAdsProvider = new GoogleAdsProvider(googleAdsService);
-const googleTrendsProvider = new GoogleTrendsProvider(); // Placeholder
-const semrushProvider = new SEMrushProvider(); // Placeholder
-const dataAggregator = new DataAggregator([googleAdsProvider, googleTrendsProvider, semrushProvider]);
+// Initialize KeywordService (no params needed now)
+const keywordService = new KeywordService();
 
 // Zod schema for input validation
 const keywordSchema = z.object({
@@ -131,12 +114,15 @@ exports.findSuggestions = async (req, res) => {
 exports.analyzeKeyword = async (req, res, next) => {
   try {
     const { keyword } = keywordSchema.parse(req.query);
-
-    const suggestions = await getKeywordSuggestions(keyword);
-
+    const keywordData = await keywordService.getKeywordData(keyword);
+    const relatedKeywords = await keywordService.getRelatedKeywords(keyword);
+    
     const response = {
       success: true,
-      data: suggestions,
+      data: {
+        mainKeyword: keywordData,
+        relatedKeywords: relatedKeywords
+      }
     };
 
     res.json(response);
@@ -145,5 +131,36 @@ exports.analyzeKeyword = async (req, res, next) => {
       return next(new ValidationError('Invalid input parameters'));
     }
     next(error);
+  }
+};
+
+// Add a new endpoint for related keywords only
+exports.getRelatedKeywords = async (req, res, next) => {
+  try {
+    const { keyword } = keywordSchema.parse(req.query);
+    const relatedKeywords = await keywordService.getRelatedKeywords(keyword);
+    
+    res.json({
+      success: true,
+      data: relatedKeywords
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new ValidationError('Invalid input parameters'));
+    }
+    next(error);
+  }
+};
+
+exports.getKeywordTrends = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const keyword = await Keyword.findById(id);
+    if (!keyword) {
+      return res.status(404).json({ message: 'Keyword not found' });
+    }
+    res.status(200).json(keyword.searchVolumeTrends);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
